@@ -1,73 +1,52 @@
-# React + TypeScript + Vite
+# RS-232C シリアルモニタ
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Web Serial API を使ったブラウザベースの RS-232C シリアル通信モニタです。
 
-Currently, two official plugins are available:
+## 機能
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **接続設定** — ボーレート、データビット、ストップビット、パリティ、フロー制御を指定して接続
+- **リアルタイム受信** — TEXT / HEX 表示を切り替えてデータを確認
+- **データ送信** — 接続中のシリアルポートへテキストデータを送信
+- **接続状態表示** — ポート情報・エラーをリアルタイムで表示
 
-## React Compiler
+## 技術スタック
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- React 19 / TypeScript / Vite
 
-## Expanding the ESLint configuration
+## 必要環境
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- Node.js 22 以上
+- Web Serial API 対応ブラウザ（Chrome / Edge）
+  - HTTPS または localhost でのアクセスが必要
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## セットアップ
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+DevContainer にも対応しているため、VS Code の **Dev Containers** 拡張機能でそのまま開発環境を起動できます。
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## npm スクリプト
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+| コマンド          | 説明                       |
+| ----------------- | -------------------------- |
+| `npm run dev`     | 開発サーバーを起動         |
+| `npm run build`   | TypeScript 型チェック＋ビルド |
+| `npm run lint`    | ESLint による静的解析      |
+| `npm run preview` | ビルド成果物をプレビュー   |
+
+## プロジェクト構成
+
+```
+src/
+├── App.tsx                       # アプリケーションルート
+├── main.tsx                      # エントリポイント
+├── hooks/
+│   └── useSerial.ts              # Web Serial API ラッパー
+└── components/
+    ├── SerialConfig.tsx           # 接続設定パネル
+    ├── SerialMonitor.tsx          # 受信データ表示・送信
+    └── ConnectionStatus.tsx       # 接続状態インジケータ
 ```
