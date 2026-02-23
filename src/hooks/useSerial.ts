@@ -1,0 +1,170 @@
+import { useState, useRef, useCallback, useEffect } from "react";
+
+export interface SerialOptions {
+  baudRate: number;
+  dataBits: 7 | 8;
+  stopBits: 1 | 2;
+  parity: ParityType;
+  flowControl: FlowControlType;
+}
+
+export interface ReceivedData {
+  timestamp: Date;
+  text: string;
+  raw: Uint8Array;
+}
+
+const DEFAULT_OPTIONS: SerialOptions = {
+  baudRate: 9600,
+  dataBits: 8,
+  stopBits: 1,
+  parity: "none",
+  flowControl: "none",
+};
+
+export function useSerial() {
+  const [isConnected, setIsConnected] = useState(false);
+  const [receivedData, setReceivedData] = useState<ReceivedData[]>([]);
+  const [portInfo, setPortInfo] = useState<SerialPortInfo | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const portRef = useRef<SerialPort | null>(null);
+  const readerRef = useRef<ReadableStreamDefaultReader<Uint8Array> | null>(
+    null
+  );
+  const readLoopActiveRef = useRef(false);
+
+  const isSupported = "serial" in navigator;
+
+  const readLoop = useCallback(async () => {
+    if (!portRef.current?.readable) return;
+
+    readLoopActiveRef.current = true;
+
+    while (portRef.current.readable && readLoopActiveRef.current) {
+      const reader = portRef.current.readable.getReader();
+      readerRef.current = reader;
+
+      try {
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          if (value) {
+            const decoder = new TextDecoder();
+            const text = decoder.decode(value);
+            const raw = new Uint8Array(value);
+            setReceivedData((prev) => [
+              ...prev,
+              { timestamp: new Date(), text, raw },
+            ]);
+          }
+        }
+      } catch (err) {
+        if (readLoopActiveRef.current) {
+          console.error("Read error:", err);
+          setError(`読み取りエラー: ${err}`);
+        }
+      } finally {
+        reader.releaseLock();
+        readerRef.current = null;
+      }
+    }
+  }, []);
+
+  const connect = useCallback(
+    async (options: SerialOptions = DEFAULT_OPTIONS) => {
+      try {
+        setError(null);
+        const port = await navigator.serial.requestPort();
+        await port.open({
+          baudRate: options.baudRate,
+          dataBits: options.dataBits,
+          stopBits: options.stopBits,
+          parity: options.parity,
+          flowControl: options.flowControl,
+        });
+
+        portRef.current = port;
+        setPortInfo(port.getInfo());
+        setIsConnected(true);
+
+        readLoop();
+      } catch (err) {
+        if (err instanceof DOMException && err.name === "NotFoundError") {
+          // User cancelled port selection
+          return;
+        }
+        console.error("Connection error:", err);
+        setError(`接続エラー: ${err}`);
+        setIsConnected(false);
+      }
+    },
+    [readLoop]
+  );
+
+  const disconnect = useCallback(async () => {
+    readLoopActiveRef.current = false;
+
+    try {
+      if (readerRef.current) {
+        await readerRef.current.cancel();
+        readerRef.current = null;
+      }
+      if (portRef.current) {
+        await portRef.current.close();
+        portRef.current = null;
+      }
+    } catch (err) {
+      console.error("Disconnect error:", err);
+    } finally {
+      setIsConnected(false);
+      setPortInfo(null);
+    }
+  }, []);
+
+  const sendData = useCallback(async (text: string) => {
+    if (!portRef.current?.writable) {
+      setError("ポートが書き込み可能ではありません");
+      return;
+    }
+
+    const writer = portRef.current.writable.getWriter();
+    try {
+      const encoder = new TextEncoder();
+      await writer.write(encoder.encode(text));
+    } catch (err) {
+      console.error("Write error:", err);
+      setError(`送信エラー: ${err}`);
+    } finally {
+      writer.releaseLock();
+    }
+  }, []);
+
+  const clearData = useCallback(() => {
+    setReceivedData([]);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      readLoopActiveRef.current = false;
+      if (readerRef.current) {
+        readerRef.current.cancel().catch(() => {});
+      }
+      if (portRef.current) {
+        portRef.current.close().catch(() => {});
+      }
+    };
+  }, []);
+
+  return {
+    isConnected,
+    isSupported,
+    receivedData,
+    portInfo,
+    error,
+    connect,
+    disconnect,
+    sendData,
+    clearData,
+  };
+}
