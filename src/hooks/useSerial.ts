@@ -1,4 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import Encoding from "encoding-japanese";
+
+export type EncodingType = "SJIS" | "EUCJP" | "UTF8";
 
 export interface SerialOptions {
   baudRate: number;
@@ -29,12 +32,19 @@ export function useSerial() {
   const [portInfo, setPortInfo] = useState<SerialPortInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pairedPorts, setPairedPorts] = useState<SerialPort[]>([]);
+  const [encoding, setEncodingState] = useState<EncodingType>("SJIS");
 
   const portRef = useRef<SerialPort | null>(null);
   const readerRef = useRef<ReadableStreamDefaultReader<Uint8Array> | null>(
     null
   );
   const readLoopActiveRef = useRef(false);
+  const encodingRef = useRef<EncodingType>("SJIS");
+
+  const setEncoding = useCallback((enc: EncodingType) => {
+    encodingRef.current = enc;
+    setEncodingState(enc);
+  }, []);
 
   const isSupported = "serial" in navigator;
 
@@ -58,9 +68,12 @@ export function useSerial() {
           const { value, done } = await reader.read();
           if (done) break;
           if (value) {
-            const decoder = new TextDecoder();
-            const text = decoder.decode(value);
             const raw = new Uint8Array(value);
+            const converted = Encoding.convert(raw, {
+              to: "UNICODE",
+              from: encodingRef.current,
+            });
+            const text = Encoding.codeToString(converted);
             setReceivedData((prev) => [
               ...prev,
               { timestamp: new Date(), text, raw },
@@ -192,8 +205,13 @@ export function useSerial() {
 
     const writer = portRef.current.writable.getWriter();
     try {
-      const encoder = new TextEncoder();
-      await writer.write(encoder.encode(text));
+      const encoded = new Uint8Array(
+        Encoding.convert(Encoding.stringToCode(text), {
+          to: encodingRef.current,
+          from: "UNICODE",
+        })
+      );
+      await writer.write(encoded);
     } catch (err) {
       console.error("Write error:", err);
       setError(`送信エラー: ${err}`);
@@ -250,6 +268,8 @@ export function useSerial() {
     portInfo,
     pairedPorts,
     error,
+    encoding,
+    setEncoding,
     connect,
     disconnect,
     selectPort,

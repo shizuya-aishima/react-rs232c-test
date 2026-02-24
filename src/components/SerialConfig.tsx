@@ -1,13 +1,15 @@
 import { useState } from "react";
-import type { SerialOptions } from "../hooks/useSerial";
+import type { SerialOptions, EncodingType } from "../hooks/useSerial";
 
 interface SerialConfigProps {
   isConnected: boolean;
   pairedPorts: SerialPort[];
+  encoding: EncodingType;
   onConnect: (options: SerialOptions) => void;
   onDisconnect: () => void;
   onSelectPort: () => void;
   onForgetPort: (port: SerialPort) => void;
+  onEncodingChange: (encoding: EncodingType) => void;
 }
 
 const BAUD_RATES = [9600, 19200, 38400, 57600, 115200];
@@ -15,6 +17,11 @@ const DATA_BITS = [7, 8] as const;
 const STOP_BITS = [1, 2] as const;
 const PARITIES = ["none", "even", "odd"] as const;
 const FLOW_CONTROLS = ["none", "hardware"] as const;
+const ENCODINGS: { value: EncodingType; label: string }[] = [
+  { value: "SJIS", label: "Shift-JIS (SJIS)" },
+  { value: "EUCJP", label: "EUC-JP" },
+  { value: "UTF8", label: "UTF-8" },
+];
 
 function formatPortLabel(port: SerialPort, index: number): string {
   const info = port.getInfo();
@@ -29,10 +36,12 @@ function formatPortLabel(port: SerialPort, index: number): string {
 export function SerialConfig({
   isConnected,
   pairedPorts,
+  encoding,
   onConnect,
   onDisconnect,
   onSelectPort,
   onForgetPort,
+  onEncodingChange,
 }: SerialConfigProps) {
   const [baudRate, setBaudRate] = useState(9600);
   const [dataBits, setDataBits] = useState<7 | 8>(8);
@@ -124,6 +133,20 @@ export function SerialConfig({
             {FLOW_CONTROLS.map((fc) => (
               <option key={fc} value={fc}>
                 {fc}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label>
+          文字コード
+          <select
+            value={encoding}
+            onChange={(e) => onEncodingChange(e.target.value as EncodingType)}
+          >
+            {ENCODINGS.map((enc) => (
+              <option key={enc.value} value={enc.value}>
+                {enc.label}
               </option>
             ))}
           </select>

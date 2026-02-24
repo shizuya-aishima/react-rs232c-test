@@ -13,6 +13,8 @@ function App() {
     portInfo,
     pairedPorts,
     error,
+    encoding,
+    setEncoding,
     connect,
     disconnect,
     selectPort,
@@ -56,10 +58,12 @@ function App() {
           <SerialConfig
             isConnected={isConnected}
             pairedPorts={pairedPorts}
+            encoding={encoding}
             onConnect={connect}
             onDisconnect={disconnect}
             onSelectPort={selectPort}
             onForgetPort={forgetPort}
+            onEncodingChange={setEncoding}
           />
         </aside>
 
