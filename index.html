@@ -1,4 +1,10 @@
 <!doctype html>
+<!--
+  Vite のエントリー HTML ファイル。
+  開発時は Vite の開発サーバーがこのファイルを直接配信する。
+  本番ビルド時は vite build がこのファイルを元に、
+  バンドル済み JS/CSS へのハッシュ付き参照を含む dist/index.html を生成する。
+-->
 <html lang="ja">
   <head>
     <meta charset="UTF-8" />
@@ -7,7 +13,13 @@
     <title>RS-232C シリアルモニタ</title>
   </head>
   <body>
+    <!-- React アプリケーションのマウントポイント。main.tsx の createRoot() がここに描画する -->
     <div id="root"></div>
+    <!--
+      type="module" により ESModules として読み込む。
+      Vite はこのスクリプトタグを検出し、開発時は HMR クライアントを注入、
+      本番ビルド時はバンドル済みファイルへの参照に書き換える。
+    -->
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

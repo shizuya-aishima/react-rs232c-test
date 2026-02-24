@@ -1,3 +1,20 @@
+/**
+ * App - アプリケーションのルートコンポーネント
+ *
+ * レイアウト構成:
+ *   - header: アプリタイトルと接続状態表示（ConnectionStatus）
+ *   - aside (sidebar): シリアル通信パラメータの設定UI（SerialConfig）
+ *   - section (content): シリアルモニタ本体（SerialMonitor）
+ *
+ * 状態管理:
+ *   useSerial フックが全てのシリアル通信関連の状態とロジックを保持し、
+ *   各子コンポーネントには Props で必要な値とコールバックを渡す（Props Drilling パターン）。
+ *
+ * 製品版への移行時の考慮事項:
+ *   - Props Drilling が深くなる場合は、Context API や状態管理ライブラリ（Zustand 等）を導入する
+ *   - 複数ポート同時接続が必要な場合は useSerial をポート単位でインスタンス化する
+ *   - ルーティング導入時は React Router 等でページ分割を検討する
+ */
 import { useSerial } from "./hooks/useSerial";
 import { SerialConfig } from "./components/SerialConfig";
 import { SerialMonitor } from "./components/SerialMonitor";
@@ -23,6 +40,12 @@ function App() {
     clearData,
   } = useSerial();
 
+  /**
+   * Web Serial API 非対応ブラウザへのフォールバック表示。
+   * navigator.serial が存在しない場合（Firefox, Safari, 古いブラウザ）に表示する。
+   * Web Serial API は Secure Context（HTTPS or localhost）でのみ利用可能なため、
+   * HTTP でアクセスした場合もこの分岐に入る。
+   */
   if (!isSupported) {
     return (
       <div className="app">
