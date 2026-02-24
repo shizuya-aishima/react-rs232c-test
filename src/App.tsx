@@ -7,6 +7,7 @@ import "./App.css";
 function App() {
   const {
     isConnected,
+    isAutoConnecting,
     isSupported,
     receivedData,
     portInfo,
@@ -42,6 +43,7 @@ function App() {
         <h1>RS-232C シリアルモニタ</h1>
         <ConnectionStatus
           isConnected={isConnected}
+          isAutoConnecting={isAutoConnecting}
           portInfo={portInfo}
           error={error}
         />

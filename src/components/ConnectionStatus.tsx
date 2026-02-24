@@ -1,20 +1,22 @@
 interface ConnectionStatusProps {
   isConnected: boolean;
+  isAutoConnecting: boolean;
   portInfo: SerialPortInfo | null;
   error: string | null;
 }
 
 export function ConnectionStatus({
   isConnected,
+  isAutoConnecting,
   portInfo,
   error,
 }: ConnectionStatusProps) {
   return (
     <div className="connection-status">
       <div className="status-indicator">
-        <span className={`status-dot ${isConnected ? "connected" : "disconnected"}`} />
+        <span className={`status-dot ${isConnected ? "connected" : isAutoConnecting ? "connecting" : "disconnected"}`} />
         <span className="status-text">
-          {isConnected ? "接続中" : "切断中"}
+          {isAutoConnecting ? "自動接続中..." : isConnected ? "接続中" : "切断中"}
         </span>
       </div>
 

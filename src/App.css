@@ -169,6 +169,17 @@
   box-shadow: 0 0 6px #e94560;
 }
 
+.status-dot.connecting {
+  background: #f0a500;
+  box-shadow: 0 0 6px #f0a500;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
 .status-text {
   font-size: 0.85rem;
 }

@@ -24,6 +24,7 @@ const DEFAULT_OPTIONS: SerialOptions = {
 
 export function useSerial() {
   const [isConnected, setIsConnected] = useState(false);
+  const [isAutoConnecting, setIsAutoConnecting] = useState(false);
   const [receivedData, setReceivedData] = useState<ReceivedData[]>([]);
   const [portInfo, setPortInfo] = useState<SerialPortInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -175,6 +176,29 @@ export function useSerial() {
   }, []);
 
   useEffect(() => {
+    if (!("serial" in navigator)) return;
+    let cancelled = false;
+
+    (async () => {
+      const ports = await navigator.serial.getPorts();
+      if (cancelled || ports.length === 0) return;
+
+      setIsAutoConnecting(true);
+      try {
+        await connect(DEFAULT_OPTIONS);
+      } finally {
+        if (!cancelled) setIsAutoConnecting(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  // connect は useCallback で安定しているが deps に含めると循環するため除外
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
     return () => {
       readLoopActiveRef.current = false;
       if (readerRef.current) {
@@ -188,6 +212,7 @@ export function useSerial() {
 
   return {
     isConnected,
+    isAutoConnecting,
     isSupported,
     receivedData,
     portInfo,
