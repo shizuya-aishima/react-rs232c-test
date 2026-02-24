@@ -13,6 +13,7 @@ function App() {
     error,
     connect,
     disconnect,
+    selectPort,
     sendData,
     clearData,
   } = useSerial();
@@ -52,6 +53,7 @@ function App() {
             isConnected={isConnected}
             onConnect={connect}
             onDisconnect={disconnect}
+            onSelectPort={selectPort}
           />
         </aside>
 

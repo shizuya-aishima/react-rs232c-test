@@ -5,6 +5,7 @@ interface SerialConfigProps {
   isConnected: boolean;
   onConnect: (options: SerialOptions) => void;
   onDisconnect: () => void;
+  onSelectPort: () => void;
 }
 
 const BAUD_RATES = [9600, 19200, 38400, 57600, 115200];
@@ -17,6 +18,7 @@ export function SerialConfig({
   isConnected,
   onConnect,
   onDisconnect,
+  onSelectPort,
 }: SerialConfigProps) {
   const [baudRate, setBaudRate] = useState(9600);
   const [dataBits, setDataBits] = useState<7 | 8>(8);
@@ -114,12 +116,20 @@ export function SerialConfig({
         </label>
       </div>
 
-      <button
-        className={`connect-btn ${isConnected ? "disconnect" : "connect"}`}
-        onClick={isConnected ? onDisconnect : handleConnect}
-      >
-        {isConnected ? "切断" : "接続"}
-      </button>
+      <div className="connect-actions">
+        <button
+          className={`connect-btn ${isConnected ? "disconnect" : "connect"}`}
+          onClick={isConnected ? onDisconnect : handleConnect}
+        >
+          {isConnected ? "切断" : "接続"}
+        </button>
+        <button
+          className="select-port-btn"
+          onClick={onSelectPort}
+        >
+          ポートを変更
+        </button>
+      </div>
     </div>
   );
 }

@@ -75,7 +75,11 @@ export function useSerial() {
     async (options: SerialOptions = DEFAULT_OPTIONS) => {
       try {
         setError(null);
-        const port = await navigator.serial.requestPort();
+        let port = portRef.current;
+        if (!port) {
+          const ports = await navigator.serial.getPorts();
+          port = ports.length > 0 ? ports[0] : await navigator.serial.requestPort();
+        }
         await port.open({
           baudRate: options.baudRate,
           dataBits: options.dataBits,
@@ -101,6 +105,32 @@ export function useSerial() {
     },
     [readLoop]
   );
+
+  const selectPort = useCallback(async () => {
+    try {
+      setError(null);
+      if (portRef.current) {
+        readLoopActiveRef.current = false;
+        if (readerRef.current) {
+          await readerRef.current.cancel();
+          readerRef.current = null;
+        }
+        await portRef.current.close();
+        portRef.current = null;
+        setIsConnected(false);
+        setPortInfo(null);
+      }
+      const port = await navigator.serial.requestPort();
+      portRef.current = port;
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "NotFoundError") {
+        // User cancelled port selection
+        return;
+      }
+      console.error("Port selection error:", err);
+      setError(`ポート選択エラー: ${err}`);
+    }
+  }, []);
 
   const disconnect = useCallback(async () => {
     readLoopActiveRef.current = false;
@@ -164,6 +194,7 @@ export function useSerial() {
     error,
     connect,
     disconnect,
+    selectPort,
     sendData,
     clearData,
   };
