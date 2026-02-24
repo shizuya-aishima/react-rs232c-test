@@ -11,10 +11,12 @@ function App() {
     isSupported,
     receivedData,
     portInfo,
+    pairedPorts,
     error,
     connect,
     disconnect,
     selectPort,
+    forgetPort,
     sendData,
     clearData,
   } = useSerial();
@@ -53,9 +55,11 @@ function App() {
         <aside className="sidebar">
           <SerialConfig
             isConnected={isConnected}
+            pairedPorts={pairedPorts}
             onConnect={connect}
             onDisconnect={disconnect}
             onSelectPort={selectPort}
+            onForgetPort={forgetPort}
           />
         </aside>
 

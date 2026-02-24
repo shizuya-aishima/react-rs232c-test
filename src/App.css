@@ -139,6 +139,72 @@
   color: #e0e0e0;
 }
 
+/* Paired Ports */
+.paired-ports {
+  margin-top: 1.25rem;
+  border-top: 1px solid #1a1a2e;
+  padding-top: 1rem;
+}
+
+.paired-ports h3 {
+  font-size: 0.85rem;
+  color: #a0a0b0;
+  margin: 0 0 0.5rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.no-ports {
+  font-size: 0.85rem;
+  color: #606070;
+  margin: 0;
+}
+
+.port-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.port-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #1a1a2e;
+  border-radius: 4px;
+  padding: 0.4rem 0.6rem;
+  gap: 0.5rem;
+}
+
+.port-label {
+  font-size: 0.8rem;
+  color: #c0c0d0;
+  font-family: monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.forget-port-btn {
+  flex-shrink: 0;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.75rem;
+  background: transparent;
+  border: 1px solid #8b1a2e;
+  color: #d13a54;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.forget-port-btn:hover {
+  background: #8b1a2e;
+  color: #e0e0e0;
+}
+
 /* Connection Status */
 .connection-status {
   display: flex;

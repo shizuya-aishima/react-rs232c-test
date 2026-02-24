@@ -28,6 +28,7 @@ export function useSerial() {
   const [receivedData, setReceivedData] = useState<ReceivedData[]>([]);
   const [portInfo, setPortInfo] = useState<SerialPortInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [pairedPorts, setPairedPorts] = useState<SerialPort[]>([]);
 
   const portRef = useRef<SerialPort | null>(null);
   const readerRef = useRef<ReadableStreamDefaultReader<Uint8Array> | null>(
@@ -36,6 +37,12 @@ export function useSerial() {
   const readLoopActiveRef = useRef(false);
 
   const isSupported = "serial" in navigator;
+
+  const loadPairedPorts = useCallback(async () => {
+    if (!("serial" in navigator)) return;
+    const ports = await navigator.serial.getPorts();
+    setPairedPorts(ports);
+  }, []);
 
   const readLoop = useCallback(async () => {
     if (!portRef.current?.readable) return;
@@ -94,6 +101,7 @@ export function useSerial() {
         setIsConnected(true);
 
         readLoop();
+        await loadPairedPorts();
       } catch (err) {
         if (err instanceof DOMException && err.name === "NotFoundError") {
           // User cancelled port selection
@@ -104,7 +112,7 @@ export function useSerial() {
         setIsConnected(false);
       }
     },
-    [readLoop]
+    [readLoop, loadPairedPorts]
   );
 
   const selectPort = useCallback(async () => {
@@ -123,6 +131,7 @@ export function useSerial() {
       }
       const port = await navigator.serial.requestPort();
       portRef.current = port;
+      await loadPairedPorts();
     } catch (err) {
       if (err instanceof DOMException && err.name === "NotFoundError") {
         // User cancelled port selection
@@ -131,7 +140,7 @@ export function useSerial() {
       console.error("Port selection error:", err);
       setError(`ポート選択エラー: ${err}`);
     }
-  }, []);
+  }, [loadPairedPorts]);
 
   const disconnect = useCallback(async () => {
     readLoopActiveRef.current = false;
@@ -152,6 +161,28 @@ export function useSerial() {
       setPortInfo(null);
     }
   }, []);
+
+  const forgetPort = useCallback(async (port: SerialPort) => {
+    try {
+      setError(null);
+      if (portRef.current === port) {
+        readLoopActiveRef.current = false;
+        if (readerRef.current) {
+          await readerRef.current.cancel();
+          readerRef.current = null;
+        }
+        await portRef.current.close();
+        portRef.current = null;
+        setIsConnected(false);
+        setPortInfo(null);
+      }
+      await port.forget();
+      await loadPairedPorts();
+    } catch (err) {
+      console.error("Forget port error:", err);
+      setError(`ポート削除エラー: ${err}`);
+    }
+  }, [loadPairedPorts]);
 
   const sendData = useCallback(async (text: string) => {
     if (!portRef.current?.writable) {
@@ -181,6 +212,7 @@ export function useSerial() {
 
     (async () => {
       const ports = await navigator.serial.getPorts();
+      if (!cancelled) setPairedPorts(ports);
       if (cancelled || ports.length === 0) return;
 
       setIsAutoConnecting(true);
@@ -216,10 +248,12 @@ export function useSerial() {
     isSupported,
     receivedData,
     portInfo,
+    pairedPorts,
     error,
     connect,
     disconnect,
     selectPort,
+    forgetPort,
     sendData,
     clearData,
   };

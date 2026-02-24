@@ -3,9 +3,11 @@ import type { SerialOptions } from "../hooks/useSerial";
 
 interface SerialConfigProps {
   isConnected: boolean;
+  pairedPorts: SerialPort[];
   onConnect: (options: SerialOptions) => void;
   onDisconnect: () => void;
   onSelectPort: () => void;
+  onForgetPort: (port: SerialPort) => void;
 }
 
 const BAUD_RATES = [9600, 19200, 38400, 57600, 115200];
@@ -14,11 +16,23 @@ const STOP_BITS = [1, 2] as const;
 const PARITIES = ["none", "even", "odd"] as const;
 const FLOW_CONTROLS = ["none", "hardware"] as const;
 
+function formatPortLabel(port: SerialPort, index: number): string {
+  const info = port.getInfo();
+  if (info.usbVendorId !== undefined && info.usbProductId !== undefined) {
+    const vid = info.usbVendorId.toString(16).toUpperCase().padStart(4, "0");
+    const pid = info.usbProductId.toString(16).toUpperCase().padStart(4, "0");
+    return `VID: 0x${vid} / PID: 0x${pid}`;
+  }
+  return `ポート ${index + 1}`;
+}
+
 export function SerialConfig({
   isConnected,
+  pairedPorts,
   onConnect,
   onDisconnect,
   onSelectPort,
+  onForgetPort,
 }: SerialConfigProps) {
   const [baudRate, setBaudRate] = useState(9600);
   const [dataBits, setDataBits] = useState<7 | 8>(8);
@@ -129,6 +143,28 @@ export function SerialConfig({
         >
           ポートを変更
         </button>
+      </div>
+
+      <div className="paired-ports">
+        <h3>ペアリング済みポート</h3>
+        {pairedPorts.length === 0 ? (
+          <p className="no-ports">なし</p>
+        ) : (
+          <ul className="port-list">
+            {pairedPorts.map((port, index) => (
+              <li key={index} className="port-item">
+                <span className="port-label">{formatPortLabel(port, index)}</span>
+                <button
+                  className="forget-port-btn"
+                  onClick={() => onForgetPort(port)}
+                  title="このポートのペアリングを解除"
+                >
+                  削除
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );
